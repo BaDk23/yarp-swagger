@@ -1,5 +1,4 @@
-﻿using Microsoft.OpenApi.Models;
-using System.Net;
+﻿using Microsoft.OpenApi;
 using Yarp.ReverseProxy.Swagger;
 using Yarp.ReverseProxy.Transforms;
 using Yarp.ReverseProxy.Transforms.Builder;
@@ -99,8 +98,9 @@ public class HeaderTransformFactory : ITransformFactory, ISwaggerTransformFactor
     {
         if (transformValues.ContainsKey("RenameHeader"))
         {
-            foreach (var parameter in operation.Parameters)
+            for (var i = 0; i < operation.Parameters.Count; i++)
             {
+                var parameter = operation.Parameters[i];
                 if (parameter.In.HasValue && parameter.In.Value.ToString().Equals("Header"))
                 {
                     if (transformValues.TryGetValue("RenameHeader", out var header)
@@ -108,7 +108,14 @@ public class HeaderTransformFactory : ITransformFactory, ISwaggerTransformFactor
                     {
                         if (parameter.Name == newHeader)
                         {
-                            parameter.Name = header;
+                            // Replace parameter with a copy with the new name as Name is read only
+                            var copy = parameter.CreateShallowCopy();
+                            var nameProperty = copy.GetType().GetProperty("Name");
+                            if (nameProperty != null && nameProperty.CanWrite)
+                            {
+                                nameProperty.SetValue(copy, header);
+                                operation.Parameters[i] = copy;
+                            }
                         }
                     }
                 }
