@@ -96,7 +96,8 @@ public class HeaderTransformFactory : ITransformFactory, ISwaggerTransformFactor
     /// <returns></returns>
     public bool Build(OpenApiOperation operation, IReadOnlyDictionary<string, string> transformValues)
     {
-        if (transformValues.ContainsKey("RenameHeader"))
+        if (transformValues.ContainsKey("RenameHeader") &&
+            operation.Parameters?.Any() == true)
         {
             for (var i = 0; i < operation.Parameters.Count; i++)
             {
